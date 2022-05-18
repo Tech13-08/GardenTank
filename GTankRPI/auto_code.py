@@ -179,7 +179,7 @@ def getDistance():
     ultrasonic.append(distance)
     num = num + 1
     time.sleep(0.01)
-  return (ultrasonic[1] + ultrasonic[2] + ultrasonic[3])/3
+  return ((ultrasonic[1] + ultrasonic[2] + ultrasonic[3])/3)/30.48
 
 def auto(map,path):
   init()
