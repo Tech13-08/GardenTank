@@ -160,6 +160,7 @@ while run:
                 input_width.visible = False
                 input_height.visible = False
                 inputDimensionsBtn.visible = False
+                mousePos = (0,0)
             if user_map.width > 0:
                 if backBtn.isOver(mousePos):
                     mapEditBtn.visible = True
@@ -184,7 +185,7 @@ while run:
                 if map_editing and not backBtn.isOver(mousePos):
                     user_map.updateMap(mousePos, currentBlock)
                 if sendBtn.isOver(mousePos):
-                  connect.start(user_map.map_array, user_map.path_array)
+                  #connect.start(user_map.toString(),join(user_map.path_array))
 
         if map_editing:
             if user_map.width == 0:

@@ -81,7 +81,7 @@ class Map:
                                     math.floor((yPos + (self.box_size // 2)) + (self.height / 2 - textB.get_height() / 2)),
                                 ),
                         )
-
+    
     def updateMap(self, pos, block):
         if 3 not in self.map_array:
             self.path_array.clear()
@@ -95,3 +95,18 @@ class Map:
                     self.path_array.append((yPos, xPos))
                 elif (yPos, xPos) in self.path_array:
                     self.path_array.remove((yPos, xPos))
+    def mapToString(self):
+        output = ""
+        for j in range(self.map_array.shape[0]):
+            output = output + np.array2string(self.map_array[j], separator=",")
+            if not(j == self.map_array.shape[0]-1):
+                output = output + "N"
+        return output
+    def pathToStrin(self):
+        output = ""
+        for j in range(self.path_array):
+            output = output + ",".join(self.path_array[j])
+            if not(j == self.path_array):
+                output = output + "N"
+        return output
+                        
