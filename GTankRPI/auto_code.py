@@ -183,6 +183,13 @@ def getDistance():
 
 def auto(map,path):
   init()
+  map = map.split("N")
+  for i in map:
+    map[i] = i.split(",")
+  path = path.split("N")
+  for i in path:
+    path[i] = i.split(",")
+  
   currentPos = path[0]
   for i in range(1, len(path)):
     vertical = path[i][0] - currentPos[0]

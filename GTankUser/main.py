@@ -185,7 +185,7 @@ while run:
                 if map_editing and not backBtn.isOver(mousePos):
                     user_map.updateMap(mousePos, currentBlock)
                 if sendBtn.isOver(mousePos):
-                  #connect.start(user_map.toString(),join(user_map.path_array))
+                  connect.start(user_map.toString(),user_map.pathToString())
 
         if map_editing:
             if user_map.width == 0:

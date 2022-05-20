@@ -102,11 +102,11 @@ class Map:
             if not(j == self.map_array.shape[0]-1):
                 output = output + "N"
         return output
-    def pathToStrin(self):
+    def pathToString(self):
         output = ""
-        for j in range(self.path_array):
-            output = output + ",".join(self.path_array[j])
-            if not(j == self.path_array):
+        for j in range(len(self.path_array)):
+            output = output + ",".join(str(num) for num in self.path_array[j])
+            if not(j == len(self.path_array)-1):
                 output = output + "N"
         return output
                         
