@@ -181,27 +181,31 @@ def getDistance():
     time.sleep(0.01)
   return ((ultrasonic[1] + ultrasonic[2] + ultrasonic[3])/3)/30.48
 
-def auto(map,path):
+def auto(umap,upath):
   init()
-  map = map.split("N")
-  for i in map:
-    map[i] = i.split(",")
-  path = path.split("N")
-  for i in path:
-    path[i] = i.split(",")
+  umap = umap.split("N")
+  for i in range(0,len(umap)):
+    umap[i] = umap[i].split(",")
+  upath = upath.split("N")
+  for i in range(0,len(upath)):
+    upath[i] = upath[i].split(",")
   
-  currentPos = path[0]
-  for i in range(1, len(path)):
-    vertical = path[i][0] - currentPos[0]
-    
+  currentPos = upath[0]
+  for i in range(1, len(upath)):
+    print("CP:"+str(currentPos[0])+","+str(currentPos[1]))
+    vertical = int(currentPos[0])-int(upath[i][0])
+    print("V:"+str(vertical))
     initialD = getDistance()
+    print("ID:"+str(initialD))
     if(vertical>0):
       while((initialD-getDistance())<vertical):
+        print("Forward")
         run()
     else:
       while((initialD-getDistance())>vertical):
+        print("Backward")
         back()
-    currentPos = path[i]
+    currentPos = upath[i]
 
 if __name__ == '__main__':
   fire.Fire(auto)
