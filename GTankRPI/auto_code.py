@@ -199,13 +199,14 @@ def auto(umap,upath):
     print("ID:"+str(initialD))
     if(vertical>0):
       while((initialD-getDistance())<vertical):
-        print("Forward")
+        print("Forward: " + str(getDistance()))
         run()
     else:
       while((initialD-getDistance())>vertical):
-        print("Backward")
+        print("Backward: " + str(getDistance()))
         back()
     currentPos = upath[i]
+  brake()
 
 if __name__ == '__main__':
   fire.Fire(auto)
