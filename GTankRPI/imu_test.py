@@ -76,10 +76,12 @@ def gyro_cal():
     print('Gyro Calibration Complete')
     return gyro_offsets
 
-def integral(axis, data, time):
-    ans = 0
-    for i in range(0,len(time)-1):
-        ans += ((data[i][axis]+data[i+1][axis])/2)*((time[i+1]-time[i]))
+def integral(data, time, offsets):
+    ans = [0,0,0]
+    for j in range(0,3):
+        data_offseted = np.array(data)[:,j]-offsets[j]
+        for i in range(0,len(time)-1):
+            ans[j] += ((data_offseted[i]+data_offseted[i+1])/2)*(time[i+1]-time[i])
     return ans
 
 bus = smbus.SMBus(4) 	# or bus = smbus.SMBus(0) for older version boards
@@ -114,7 +116,7 @@ while True:
 	print ("Gx=%.2f" %Gx, u'\u00b0'+ "/s", "\tGy=%.2f" %Gy, u'\u00b0'+ "/s", "\tGz=%.2f" %Gz, u'\u00b0'+ "/s", "\tAx=%.2f g" %Ax, "\tAy=%.2f g" %Ay, "\tAz=%.2f g" %Az) 	
 	sleep(1)
 """
-def gyroDelta:
+if __name__ == '__main__':
         #
         ###################################
         # Gyroscope Offset Calculation
@@ -139,7 +141,7 @@ def gyroDelta:
         while time.time()-t0<record_time:
             data.append(get_gyro())
             t_vec.append(time.time()-t0)
-        print("X:" + str(integral(0,data,t_vec)))
-        print("Y:" + str(integral(1,data,t_vec)))
-        print("Z:" + str(integral(2,data,t_vec)))
-        return integral(0,data,t_vec),(integral(1,data,t_vec)),(integral(2,data,t_vec))
+        integralArray = integral(data,t_vec, gyro_offsets)
+        print("X:" + str(integralArray[0]))
+        print("Y:" + str(integralArray[1]))
+        print("Z:" + str(integralArray[2]))
