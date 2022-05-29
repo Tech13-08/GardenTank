@@ -2,6 +2,7 @@
 import RPi.GPIO as GPIO
 import time
 import fire
+import math
 
 #Definition of  motor pin 
 IN1 = 20
@@ -183,6 +184,7 @@ def getDistance():
 
 def auto(umap,upath):
   init()
+  fixPath = False
   umap = umap.split("N")
   for i in range(0,len(umap)):
     umap[i] = umap[i].split(",")
