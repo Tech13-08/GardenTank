@@ -3,6 +3,8 @@ import RPi.GPIO as GPIO
 import time
 import fire
 import math
+import imu_code as imu
+import math
 
 #Definition of  motor pin 
 IN1 = 20
@@ -35,6 +37,9 @@ GPIO.setwarnings(False)
 drive_keys = ["w", "s", "a", "d", "q", "e"]
 
 def init():
+    imu.MPU_Init()
+    imu.calibrate()
+
     #RGB pins
     GPIO.setup(LED_R, GPIO.OUT)
     GPIO.setup(LED_G, GPIO.OUT)
@@ -193,21 +198,43 @@ def auto(umap,upath):
     upath[i] = upath[i].split(",")
   
   currentPos = upath[0]
+  initialA = imu.gyroDelta()[1]
+  currentA = initialA
   for i in range(1, len(upath)):
     print("CP:"+str(currentPos[0])+","+str(currentPos[1]))
     vertical = int(currentPos[0])-int(upath[i][0])
+    horizontal = int(upath[i][1])-int(currentPos[1])
+    magnitude = math.sqrt((vertical**2) + (horizontal**2))
+    angle = math.degrees(math.atan(horizontal/vertical))
+    if(horizontal > 0):
+      angle -= 90
+    else:
+      if(vertical < 0):
+        angle += 90
     print("V:"+str(vertical))
+    print("H:"+str(horizontal))
+    print("M:"+str(magnitude))
+    print("A:"+str(angle))
     initialD = getDistance()
     print("ID:"+str(initialD))
-    if(vertical>0):
-      while((initialD-getDistance())<vertical):
+    print("IA:"+str(initialA))
+    if(angle < currentA):
+      while(currentA > angle):
+        print("CA: " + str(currentA))
+        spin_right()
+        currentA += imu.gyroDelta()[1]
+    if(angle > currentA):
+      while(currentA < angle):
+        print("CA: " + str(currentA))
+        spin_left()
+        currentA += imu.gyroDelta()[1]
+    brake()
+    time.sleep(0.3)
+    while((initialD-getDistance())<magnitude):
         print("Forward: " + str(getDistance()))
         run()
-    else:
-      while((initialD-getDistance())>vertical):
-        print("Backward: " + str(getDistance()))
-        back()
     currentPos = upath[i]
+    time.sleep(0.3)
   brake()
 
 if __name__ == '__main__':

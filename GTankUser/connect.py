@@ -12,7 +12,7 @@ def start(userMap, userPath):
   )
   with Connection("192.168.50.1", port = 22, user = "root", connect_kwargs = {"password" : "fxr"}) as c:
     #c.run("sudo python3 python/GTankRPI/auto_code.py" + userMap + userPath, pty=True, watchers=[beRoot])
-    result = c.run("python ../home/pi/python/GTankRPI/auto_code.py " + userMap + " " + userPath, pty=True, watchers=[beRoot])
+    result = c.run("python ../home/pi/python/GTankRPI/auto_code.py " + userMap + " " + userPath, pty=True, warn=True, watchers=[beRoot])
     return result.stdout
     
     
