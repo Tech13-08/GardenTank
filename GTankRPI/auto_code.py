@@ -252,6 +252,10 @@ def waterPlants(currPos, mapArr):
   plantArr = []
   for dy in range(-1,2):
     for dx in range(-1,2):
+      print(currPos[0])
+      print(int(currPos[0])+dy)
+      print(mapArr[int(currPos[0])+dy][int(currPos[1])+dx])
+      print(int(mapArr[int(currPos[0])+dy][int(currPos[1])+dx]))
       if(int(mapArr[int(currPos[0])+dy][int(currPos[1])+dx]) == 1):
         plantArr.append([int(currPos[0])+dy, int(currPos[1])+dx])
   watered_plants = []
@@ -273,10 +277,10 @@ def auto(umap,upath):
   fixPath = False
   umap = umap.split("N")
   for i in range(0,len(umap)):
-    umap[i] = umap[i].split(",")
+    umap[i] = umap[i].replace("[","").replace("]","")split(",")
   upath = upath.split("N")
   for i in range(0,len(upath)):
-    upath[i] = upath[i].split(",")
+    upath[i] = upath[i].replace("[","").replace("]","")split(",")
   
   currentPos = upath[0]
   time.sleep(0.2)
