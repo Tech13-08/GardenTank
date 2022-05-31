@@ -5,6 +5,7 @@
 import smbus			#import SMBus module of I2C
 import time             #import
 import numpy as np
+from scipy.integrate import cumtrapz
 
 #some MPU6050 Registers and their Address
 PWR_MGMT_1   = 0x6B
@@ -29,20 +30,20 @@ def MPU_Init():
     #Write to power management register
     bus.write_byte_data(Device_Address, PWR_MGMT_1, 1)
 	
-	#Write to Configuration register
-	bus.write_byte_data(Device_Address, CONFIG, 0)
+    #Write to Configuration register
+    bus.write_byte_data(Device_Address, CONFIG, 0)
 	
     #Write to Gyro configuration register
-	bus.write_byte_data(Device_Address, GYRO_CONFIG, 24)
+    bus.write_byte_data(Device_Address, GYRO_CONFIG, 24)
 	
-	#Write to interrupt enable register
-	bus.write_byte_data(Device_Address, INT_ENABLE, 1)
+    #Write to interrupt enable register
+    bus.write_byte_data(Device_Address, INT_ENABLE, 1)
 
 def read_data(addr):
 	#Accelero and Gyro value are 16-bit
         high = bus.read_byte_data(Device_Address, addr)
         low = bus.read_byte_data(Device_Address, addr+1)
-        time.sleep(0.2)   
+
         #concatenate higher and lower value
         value = ((high << 8) | low)
         
@@ -79,16 +80,16 @@ def gyro_cal(cal_size):
     return gyro_offsets
 
 def calibrate():
-    cal_size = 500 # points to use for calibration
+    cal_size = 2000 # points to use for calibration
     gyro_offsets = gyro_cal(cal_size) # calculate gyro offsets
     print(gyro_offsets)
 
-def integral(data, time, offsets):
+def offset(data, offsets):
     ans = [0,0,0]
+    data_offseted = []
     for j in range(0,3):
         data_offseted = np.array(data)[:,j]-offsets[j]
-        for i in range(0,len(time)-1):
-            ans[j] += (((data_offseted[i]+data_offseted[i+1])/2)*(time[i+1]-time[i]))*9
+        ans[j] = data_offseted
     return ans
 
 
@@ -136,14 +137,19 @@ def gyroDelta():
         ###################################
         #
         print("Recording Data...")
-        record_time = 5 # how long to record
+        record_time = 2 # how long to record
         data,t_vec = [],[]
         t0 = time.time()
         while time.time()-t0<record_time:
             data.append(get_gyro())
             t_vec.append(time.time()-t0)
-        integralArray = integral(data,t_vec, gyro_offsets)
-        print("X:" + str(integralArray[0]))
-        print("Y:" + str(integralArray[1]))
-        print("Z:" + str(integralArray[2]))
-        return integralArray
+        deltaX = cumtrapz(offset(data, gyro_offsets)[0], x=t_vec)[-1] * 9
+        deltaY = cumtrapz(offset(data, gyro_offsets)[1], x=t_vec)[-1] * 9
+        deltaZ = cumtrapz(offset(data, gyro_offsets)[2], x=t_vec)[-1] * 9
+
+        print("X:" + str(deltaX))
+        print("Y:" + str(deltaY))
+        print("Z:" + str(deltaZ))
+
+        deltaArray = [deltaX, deltaY, deltaZ]
+        return deltaArray

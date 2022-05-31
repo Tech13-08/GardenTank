@@ -8,8 +8,12 @@ IN1 = 20
 IN2 = 21
 IN3 = 19
 IN4 = 26
+
 ENA = 16
 ENB = 13
+
+#Pump motor pin
+IN5 = 2
 
 #Definition of RGB module pin
 LED_R = 22
@@ -47,17 +51,21 @@ def init():
     #Motor pins
     global pwm_ENA
     global pwm_ENB
+    global pwm_ENC
     GPIO.setup(ENA,GPIO.OUT,initial=GPIO.HIGH)
     GPIO.setup(IN1,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(IN2,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(ENB,GPIO.OUT,initial=GPIO.HIGH)
     GPIO.setup(IN3,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(IN4,GPIO.OUT,initial=GPIO.LOW)
+    GPIO.setup(IN5, GPIO.OUT, initial=GPIO.LOW)
     #Set the PWM pin and frequency is 2000hz
     pwm_ENA = GPIO.PWM(ENA, 2000)
     pwm_ENB = GPIO.PWM(ENB, 2000)
+    pwm_ENC = GPIO.PWM(IN5, 2000)
     pwm_ENA.start(0)
     pwm_ENB.start(0)
+    pwm_ENC.start(0)
   
     #Servo pin
     global pwm_servo
@@ -143,7 +151,17 @@ def turnTo(cycle):
     pwm_servo.ChangeDutyCycle(cycle)
     GPIO.output(ServoPin, GPIO.HIGH)
     currCycle = cycle
-    
+
+#Pumo
+def pump():
+    GPIO.output(IN5, GPIO.HIGH)
+    pwm_ENC.ChangeDutyCycle(50)
+
+#Stop pump
+def noPump():
+    GPIO.output(IN5, GPIO.LOW)
+    pwm_ENC.ChangeDutyCycle(0)
+
 #Ultrasonic function
 def Distance():
   GPIO.output(TrigPin,GPIO.LOW)
@@ -206,13 +224,21 @@ def press(key):
       pwm_servo.turnTo(7)
     elif(key == "c"):
       pwm_servo.turnTo(12)
-
     
+    #Pump control
+    if(key == "p"):
+      pump()
+
+    #Ultrasonic
+    Distance_test()
 def release(key):
   if(key in drive_keys):
     brake()
-  #Ultrasonic
-  Distance_test()
+
+  #Pump control
+  if(key == "p"):
+    noPump()
+  
 
 if __name__ == '__main__':
   init()

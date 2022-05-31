@@ -5,6 +5,7 @@
 import smbus			#import SMBus module of I2C
 import time             #import
 import numpy as np
+from scipy.integrate import cumtrapz
 
 #some MPU6050 Registers and their Address
 PWR_MGMT_1   = 0x6B
@@ -76,12 +77,12 @@ def gyro_cal():
     print('Gyro Calibration Complete')
     return gyro_offsets
 
-def integral(data, time, offsets):
+def offset(data, offsets):
     ans = [0,0,0]
+    data_offseted = []
     for j in range(0,3):
         data_offseted = np.array(data)[:,j]-offsets[j]
-        for i in range(0,len(time)-1):
-            ans[j] += ((data_offseted[i]+data_offseted[i+1])/2)*(time[i+1]-time[i])
+        ans[j] = data_offseted
     return ans
 
 bus = smbus.SMBus(4) 	# or bus = smbus.SMBus(0) for older version boards
@@ -135,13 +136,16 @@ if __name__ == '__main__':
         ###################################
         #
         print("Recording Data...")
-        record_time = 1 # how long to record
+        record_time = 5 # how long to record
         data,t_vec = [],[]
         t0 = time.time()
         while time.time()-t0<record_time:
             data.append(get_gyro())
             t_vec.append(time.time()-t0)
-        integralArray = integral(data,t_vec, gyro_offsets)
-        print("X:" + str(integralArray[0]))
-        print("Y:" + str(integralArray[1]))
-        print("Z:" + str(integralArray[2]))
+        deltaX = cumtrapz(offset(data, gyro_offsets)[0], x=t_vec)[-1] * 9
+        deltaY = cumtrapz(offset(data, gyro_offsets)[1], x=t_vec)[-1] * 9
+        deltaZ = cumtrapz(offset(data, gyro_offsets)[2], x=t_vec)[-1] * 9
+
+        print("X:" + str(deltaX))
+        print("Y:" + str(deltaY))
+        print("Z:" + str(deltaZ))

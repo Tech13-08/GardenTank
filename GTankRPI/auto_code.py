@@ -11,8 +11,12 @@ IN1 = 20
 IN2 = 21
 IN3 = 19
 IN4 = 26
+
 ENA = 16
 ENB = 13
+
+#Pump motor pin
+IN5 = 2
 
 #Definition of RGB module pin
 LED_R = 22
@@ -38,7 +42,11 @@ drive_keys = ["w", "s", "a", "d", "q", "e"]
 
 def init():
     imu.MPU_Init()
+    time.sleep(0.1)
     imu.calibrate()
+
+    global currentA
+    currentA = imu.gyroDelta()[1]
 
     #RGB pins
     GPIO.setup(LED_R, GPIO.OUT)
@@ -53,17 +61,21 @@ def init():
     #Motor pins
     global pwm_ENA
     global pwm_ENB
+    global pwm_ENC
     GPIO.setup(ENA,GPIO.OUT,initial=GPIO.HIGH)
     GPIO.setup(IN1,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(IN2,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(ENB,GPIO.OUT,initial=GPIO.HIGH)
     GPIO.setup(IN3,GPIO.OUT,initial=GPIO.LOW)
     GPIO.setup(IN4,GPIO.OUT,initial=GPIO.LOW)
+    GPIO.setup(IN5, GPIO.OUT, initial=GPIO.LOW)
     #Set the PWM pin and frequency is 2000hz
     pwm_ENA = GPIO.PWM(ENA, 2000)
     pwm_ENB = GPIO.PWM(ENB, 2000)
+    pwm_ENC = GPIO.PWM(IN5, 2000)
     pwm_ENA.start(0)
     pwm_ENB.start(0)
+    pwm_ENC.start(0)
   
     #Servo pin
     global pwm_servo
@@ -77,6 +89,8 @@ def init():
 
     #Key variable
     global key
+
+  
   
 
 #advance
@@ -149,6 +163,16 @@ def turnTo(cycle):
     pwm_servo.ChangeDutyCycle(cycle)
     GPIO.output(ServoPin, GPIO.HIGH)
     currCycle = cycle
+
+#Pumo
+def pump():
+    GPIO.output(IN5, GPIO.HIGH)
+    pwm_ENC.ChangeDutyCycle(50)
+
+#Stop pump
+def noPump():
+    GPIO.output(IN5, GPIO.LOW)
+    pwm_ENC.ChangeDutyCycle(0)
     
 #Ultrasonic function
 def Distance():
@@ -187,6 +211,63 @@ def getDistance():
     time.sleep(0.01)
   return ((ultrasonic[1] + ultrasonic[2] + ultrasonic[3])/3)/30.48
 
+#Get current angle
+def getCurrA():
+  return currentA
+
+#Set current angle
+def setCurrA(arg):
+  global currentA
+  currentA = arg
+
+def calcAngle(v, h):
+  angle = 0
+  if(v == 0):
+    angle = -(h/abs(h)) * 90
+  else:
+    angle = abs(math.degrees(math.atan(h/v)))
+    if(v < 0):
+        angle += 90
+    if(h > 0):
+      angle = -1 * angle
+  return angle
+
+#Set angle  
+def setAngle(ang):
+  if(ang < getCurrA()):
+    while(getCurrA() > ang):
+      print("CA: " + str(getCurrA()))
+      spin_right()
+      setCurrA(getCurrA() + imu.gyroDelta()[1])
+  elif(ang > getCurrA()):
+    while(getCurrA() < ang):
+      print("CA: " + str(getCurrA()))
+      spin_left()
+      setCurrA(getCurrA() + imu.gyroDelta()[1])
+  brake()
+  time.sleep(0.3)
+
+#Water the surrounding plants
+def waterPlants(currPos, mapArr):
+  plantArr = []
+  for dy in range(-1,2):
+    for dx in range(-1,2):
+      if(int(mapArr[int(currPos[0])+dy][int(currPos[1])+dx]) == 1):
+        plantArr.append([int(currPos[0])+dy, int(currPos[1])+dx])
+  watered_plants = []
+  for plant in plantArr:
+    if(not(plant in watered_plants)):
+         vertical = int(currPos[0])-plant[0]
+         horizontal = plant[1]-int(currPos[1])
+         angle = calcAngle(vertical, horizontal)
+         print("A:"+str(angle))
+         setAngle(angle)
+         pump()
+         time.sleep(0.2)
+         watered_plants.append(plant)
+         noPump()
+  print(watered_plants)
+
 def auto(umap,upath):
   init()
   fixPath = False
@@ -198,43 +279,30 @@ def auto(umap,upath):
     upath[i] = upath[i].split(",")
   
   currentPos = upath[0]
-  initialA = imu.gyroDelta()[1]
-  currentA = initialA
+  time.sleep(0.2)
+
   for i in range(1, len(upath)):
     print("CP:"+str(currentPos[0])+","+str(currentPos[1]))
     vertical = int(currentPos[0])-int(upath[i][0])
     horizontal = int(upath[i][1])-int(currentPos[1])
     magnitude = math.sqrt((vertical**2) + (horizontal**2))
-    angle = math.degrees(math.atan(horizontal/vertical))
-    if(horizontal > 0):
-      angle -= 90
-    else:
-      if(vertical < 0):
-        angle += 90
+    angle = calcAngle(vertical, horizontal)
     print("V:"+str(vertical))
     print("H:"+str(horizontal))
     print("M:"+str(magnitude))
     print("A:"+str(angle))
     initialD = getDistance()
     print("ID:"+str(initialD))
-    print("IA:"+str(initialA))
-    if(angle < currentA):
-      while(currentA > angle):
-        print("CA: " + str(currentA))
-        spin_right()
-        currentA += imu.gyroDelta()[1]
-    if(angle > currentA):
-      while(currentA < angle):
-        print("CA: " + str(currentA))
-        spin_left()
-        currentA += imu.gyroDelta()[1]
-    brake()
-    time.sleep(0.3)
+    print("IA:"+str(getCurrA()))
+    setAngle(angle)
     while((initialD-getDistance())<magnitude):
         print("Forward: " + str(getDistance()))
         run()
     currentPos = upath[i]
     time.sleep(0.3)
+    waterPlants(currentPos, umap)
+    time.sleep(0.3)
+
   brake()
 
 if __name__ == '__main__':
